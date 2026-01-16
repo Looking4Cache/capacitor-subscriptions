@@ -112,8 +112,29 @@ public class Subscriptions {
                             Log.i("desc", desc);
 
                             List<ProductDetails.SubscriptionOfferDetails> subscriptionOfferDetails = productDetails.getSubscriptionOfferDetails();
+                            
+                            String price = "";
+                            if (subscriptionOfferDetails != null && subscriptionOfferDetails.size() > 0) {
+                                List<ProductDetails.PricingPhase> pricingPhaseList = subscriptionOfferDetails
+                                        .get(0)
+                                        .getPricingPhases()
+                                        .getPricingPhaseList();
 
-                            String price = Objects.requireNonNull(subscriptionOfferDetails).get(0).getPricingPhases().getPricingPhaseList().get(-1).getFormattedPrice();
+                                if (pricingPhaseList != null && pricingPhaseList.size() > 0) {
+                                    ProductDetails.PricingPhase selectedPhase = null;
+                                    for (int idx = 0; idx < pricingPhaseList.size(); idx++) {
+                                        ProductDetails.PricingPhase phase = pricingPhaseList.get(idx);
+                                        if (phase != null && phase.getPriceAmountMicros() > 0) {
+                                            // "letzte bezahlte Phase" gewinnt (typisch: regulärer Preis)
+                                            selectedPhase = phase;
+                                        }
+                                    }
+                                    if (selectedPhase == null) {
+                                        selectedPhase = pricingPhaseList.get(pricingPhaseList.size() - 1);
+                                    }
+                                    price = selectedPhase.getFormattedPrice();
+                                }
+                            }
 
                             JSObject data = new JSObject();
                             data.put("productIdentifier", productId);
