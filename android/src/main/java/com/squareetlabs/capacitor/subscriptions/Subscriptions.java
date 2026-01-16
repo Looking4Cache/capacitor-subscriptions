@@ -113,7 +113,7 @@ public class Subscriptions {
 
                             List<ProductDetails.SubscriptionOfferDetails> subscriptionOfferDetails = productDetails.getSubscriptionOfferDetails();
 
-                            String price = Objects.requireNonNull(subscriptionOfferDetails).get(0).getPricingPhases().getPricingPhaseList().get(0).getFormattedPrice();
+                            String price = Objects.requireNonNull(subscriptionOfferDetails).get(0).getPricingPhases().getPricingPhaseList().get(-1).getFormattedPrice();
 
                             JSObject data = new JSObject();
                             data.put("productIdentifier", productId);
