@@ -131,19 +131,6 @@ public class SubscriptionsPlugin extends Plugin {
     }
 
     @PluginMethod
-    public void getLatestTransaction(PluginCall call) {
-
-        String productIdentifier = call.getString("productIdentifier");
-
-        if(productIdentifier == null) {
-            call.reject("Must provide a productID");
-        }
-
-        implementation.getLatestTransaction(productIdentifier, call);
-
-    }
-
-    @PluginMethod
     public void getCurrentEntitlements(PluginCall call) {
 
         implementation.getCurrentEntitlements(call);

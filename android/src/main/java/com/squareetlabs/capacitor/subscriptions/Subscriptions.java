@@ -10,9 +10,7 @@ import com.android.billingclient.api.BillingFlowParams;
 import com.android.billingclient.api.BillingResult;
 import com.android.billingclient.api.ProductDetails;
 import com.android.billingclient.api.Purchase;
-import com.android.billingclient.api.PurchaseHistoryRecord;
 import com.android.billingclient.api.QueryProductDetailsParams;
-import com.android.billingclient.api.QueryPurchaseHistoryParams;
 import com.android.billingclient.api.QueryPurchasesParams;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Logger;
@@ -99,11 +97,11 @@ public class Subscriptions {
 
             billingClient.queryProductDetailsAsync(
                     queryProductDetailsParams,
-                    (billingResult, productDetailsList) -> {
+                    (billingResult, queryProductDetailsResult) -> {
 
                         try {
 
-                            ProductDetails productDetails = productDetailsList.get(0);
+                            ProductDetails productDetails = queryProductDetailsResult.getProductDetailsList().get(0);
                             String productId = productDetails.getProductId();
                             String title = productDetails.getTitle();
                             String desc = productDetails.getDescription();
@@ -174,75 +172,6 @@ public class Subscriptions {
         }
     }
 
-    public void getLatestTransaction(String productIdentifier, PluginCall call) {
-
-        JSObject response = new JSObject();
-
-        if (billingClientIsConnected == 1) {
-
-            QueryPurchaseHistoryParams queryPurchaseHistoryParams =
-                    QueryPurchaseHistoryParams.newBuilder()
-                            .setProductType(BillingClient.ProductType.SUBS)
-                            .build();
-
-
-            billingClient.queryPurchaseHistoryAsync(queryPurchaseHistoryParams, (BillingResult billingResult, List<PurchaseHistoryRecord> list) -> {
-
-                // Try to loop through the list until we find a purchase history record associated with the passed in productIdentifier.
-                // If we do, then set found to true to break out of the loop, then compile a response with necessary data. Otherwise compile
-                // a response saying that the there were not transactions for the given productIdentifier.
-                int i = 0;
-                boolean found = false;
-                while (list != null && (i < list.size() && !found)) {
-                    try {
-
-                        JSObject currentPurchaseHistoryRecord = new JSObject(list.get(i).getOriginalJson());
-                        Log.i("PurchaseHistory", currentPurchaseHistoryRecord.toString());
-
-                        if (currentPurchaseHistoryRecord.get("productId").equals(productIdentifier)) {
-
-                            found = true;
-
-                            JSObject data = new JSObject();
-                            String expiryDate = getExpiryDateFromGoogle(productIdentifier, currentPurchaseHistoryRecord.get("purchaseToken").toString());
-                            if (expiryDate != null) {
-                                data.put("expiryDate", expiryDate);
-                            }
-                            Calendar calendar = Calendar.getInstance();
-                            calendar.setTimeInMillis(Long.parseLong((currentPurchaseHistoryRecord.get("purchaseTime").toString())));
-                            String orderId = currentPurchaseHistoryRecord.optString("orderId", "");  // Usamos optString para obtener un valor por defecto si la clave no existe
-                            data.put("productIdentifier", currentPurchaseHistoryRecord.get("productId"));
-                            data.put("originalId", orderId);
-                            data.put("transactionId", orderId);
-                            data.put("developerPayload",currentPurchaseHistoryRecord.optString("developerPayload", ""));  // Usamos optString para obtener un valor por defecto si la clave no existe
-                            data.put("purchaseToken", currentPurchaseHistoryRecord.get("purchaseToken").toString());
-
-                            response.put("responseCode", 0);
-                            response.put("responseMessage", "Successfully found the latest transaction matching given productIdentifier");
-                            response.put("data", data);
-                        }
-                    } catch (Exception e) {
-                        Logger.error(e.getMessage());
-                    }
-
-                    i++;
-
-                }
-
-                // If after looping through the list of purchase history records, no records are found to be associated with
-                // the given product identifier, return a response saying no transactions found
-                if (!found) {
-                    response.put("responseCode", 3);
-                    response.put("responseMessage", "No transaction for given productIdentifier, or it could not be verified");
-                }
-
-                call.resolve(response);
-
-            });
-
-        }
-
-    }
 
     public void getCurrentEntitlements(PluginCall call) {
 
@@ -336,10 +265,10 @@ public class Subscriptions {
 
             billingClient.queryProductDetailsAsync(
                     queryProductDetailsParams,
-                    (billingResult1, productDetailsList) -> {
+                    (billingResult1, queryProductDetailsResult) -> {
 
                         try {
-                            ProductDetails productDetails = productDetailsList.get(0);
+                            ProductDetails productDetails = queryProductDetailsResult.getProductDetailsList().get(0);
                             BillingFlowParams billingFlowParams = BillingFlowParams.newBuilder()
                                     .setProductDetailsParamsList(
                                             List.of(
