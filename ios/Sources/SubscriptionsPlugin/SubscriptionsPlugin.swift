@@ -14,6 +14,7 @@ public class SubscriptionsPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "echo", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "getProductDetails", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "purchaseProduct", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "changeSubscription", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "getCurrentEntitlements", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "getLatestTransaction", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "manageSubscriptions", returnType: CAPPluginReturnPromise),
@@ -61,6 +62,14 @@ public class SubscriptionsPlugin: CAPPlugin, CAPBridgedPlugin {
                 call.resolve(response)
             }
         }
+    }
+
+    // StoreKit wechselt innerhalb der Abo-Gruppe selbst, die Methode gibt es nur auf Android
+    @objc func changeSubscription(_ call: CAPPluginCall) {
+        call.resolve([
+            "responseCode": -1,
+            "responseMessage": "Incompatible with iOS"
+        ])
     }
 
     @available(iOS 15.0.0, *)

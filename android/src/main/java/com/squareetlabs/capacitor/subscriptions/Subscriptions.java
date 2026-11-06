@@ -297,6 +297,94 @@ public class Subscriptions {
 
     }
 
+    public void changeSubscription(String productIdentifier, String oldPurchaseToken, String replacementMode, PluginCall call) {
+
+        JSObject response = new JSObject();
+
+        int mode;
+        if ("CHARGE_PRORATED_PRICE".equals(replacementMode)) {
+            mode = BillingFlowParams.SubscriptionUpdateParams.ReplacementMode.CHARGE_PRORATED_PRICE;
+        } else if ("DEFERRED".equals(replacementMode)) {
+            mode = BillingFlowParams.SubscriptionUpdateParams.ReplacementMode.DEFERRED;
+        } else {
+            response.put("responseCode", 2);
+            response.put("responseMessage", "Unknown replacementMode");
+            call.resolve(response);
+            return;
+        }
+
+        if (billingClientIsConnected != 1) {
+            response.put("responseCode", 503);
+            response.put("responseMessage", "Android: BillingClient is not connected");
+            call.resolve(response);
+            return;
+        }
+
+        QueryProductDetailsParams.Product productToFind = QueryProductDetailsParams.Product.newBuilder()
+                .setProductId(productIdentifier)
+                .setProductType(BillingClient.ProductType.SUBS)
+                .build();
+
+        QueryProductDetailsParams queryProductDetailsParams =
+                QueryProductDetailsParams.newBuilder()
+                        .setProductList(List.of(productToFind))
+                        .build();
+
+        billingClient.queryProductDetailsAsync(
+                queryProductDetailsParams,
+                (billingResult1, queryProductDetailsResult) -> {
+
+                    try {
+                        ProductDetails productDetails = queryProductDetailsResult.getProductDetailsList().get(0);
+
+                        // Basisplan statt eines Testangebots verwenden
+                        List<ProductDetails.SubscriptionOfferDetails> offers = Objects.requireNonNull(productDetails.getSubscriptionOfferDetails());
+                        String offerToken = offers.get(0).getOfferToken();
+                        for (ProductDetails.SubscriptionOfferDetails offer : offers) {
+                            if (offer.getOfferId() == null) {
+                                offerToken = offer.getOfferToken();
+                                break;
+                            }
+                        }
+
+                        BillingFlowParams billingFlowParams = BillingFlowParams.newBuilder()
+                                .setProductDetailsParamsList(
+                                        List.of(
+                                                BillingFlowParams.ProductDetailsParams.newBuilder()
+                                                        .setProductDetails(productDetails)
+                                                        .setOfferToken(offerToken)
+                                                        .build()
+                                        )
+                                )
+                                .setSubscriptionUpdateParams(
+                                        BillingFlowParams.SubscriptionUpdateParams.newBuilder()
+                                                .setOldPurchaseToken(oldPurchaseToken)
+                                                .setSubscriptionReplacementMode(mode)
+                                                .build()
+                                )
+                                .build();
+                        BillingResult result = billingClient.launchBillingFlow(this.activity, billingFlowParams);
+
+                        Log.i("RESULT", result.toString());
+                        if (result.getResponseCode() == BillingClient.BillingResponseCode.OK) {
+                            response.put("responseCode", 0);
+                            response.put("responseMessage", "Successfully opened native popover");
+                        } else {
+                            response.put("responseCode", 1);
+                            response.put("responseMessage", "Failed to open native popover: " + result.getResponseCode());
+                        }
+
+                    } catch (Exception e) {
+                        Logger.error(e.getMessage());
+                        response.put("responseCode", 1);
+                        response.put("responseMessage", "Failed to open native popover");
+                    }
+
+                    call.resolve(response);
+                });
+
+    }
+
     private String getExpiryDateFromGoogle(String productIdentifier, String purchaseToken) {
 
         try {

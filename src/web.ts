@@ -1,6 +1,6 @@
 import { WebPlugin } from '@capacitor/core';
 
-import type { SubscriptionsPlugin, ProductDetailsResponse, PurchaseProductResponse, CurrentEntitlementsResponse, LatestTransactionResponse } from './definitions';
+import type { SubscriptionsPlugin, ProductDetailsResponse, PurchaseProductResponse, ChangeSubscriptionOptions, ChangeSubscriptionResponse, CurrentEntitlementsResponse, LatestTransactionResponse } from './definitions';
 
 export class SubscriptionsWeb extends WebPlugin implements SubscriptionsPlugin {
   setGoogleVerificationDetails(options: { googleVerifyEndpoint: string, bid: string }): void {
@@ -17,6 +17,13 @@ export class SubscriptionsWeb extends WebPlugin implements SubscriptionsPlugin {
     }
   }
   async purchaseProduct(options: { productIdentifier: string }): Promise< PurchaseProductResponse > {
+    console.info(options);
+    return {
+      responseCode: -1,
+      responseMessage: 'Incompatible with web',
+    }
+  }
+  async changeSubscription(options: ChangeSubscriptionOptions): Promise< ChangeSubscriptionResponse > {
     console.info(options);
     return {
       responseCode: -1,

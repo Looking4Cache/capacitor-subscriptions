@@ -18,6 +18,11 @@ export interface SubscriptionsPlugin {
    */
   purchaseProduct(options: { productIdentifier: string }): Promise< PurchaseProductResponse >;
 
+  /**
+   * Android only: replaces a running subscription. The result arrives via ANDROID-PURCHASE-RESPONSE
+   */
+  changeSubscription(options: ChangeSubscriptionOptions): Promise< ChangeSubscriptionResponse >;
+
 
   getCurrentEntitlements(): Promise< CurrentEntitlementsResponse >;
 
@@ -107,6 +112,19 @@ export type PurchaseProductAndroidResponseMessage =
 "Successfully opened native popover" |
 "Failed to open native popover"
 
+export type SubscriptionReplacementMode = "CHARGE_PRORATED_PRICE" | "DEFERRED"
+
+export interface ChangeSubscriptionOptions {
+	productIdentifier: string
+	oldPurchaseToken: string
+	replacementMode: SubscriptionReplacementMode
+}
+
+export interface ChangeSubscriptionResponse {
+	responseCode: -1 | 0 | 1 | 2 | 503
+	responseMessage: string
+}
+
 export interface ProductDetailsResponse {
 	responseCode: ProductDetailsResponseCode
 	responseMessage: ProductDetailsResponseMessage
@@ -121,4 +139,6 @@ export type ProductDetailsResponseMessage =
 
 export interface AndroidPurchasedTrigger {
   fired: boolean;
+  successful?: number | false;
+  responseCode?: number;
 }

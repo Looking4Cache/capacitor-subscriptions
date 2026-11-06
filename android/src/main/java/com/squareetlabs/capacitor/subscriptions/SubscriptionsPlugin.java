@@ -32,8 +32,9 @@ public class SubscriptionsPlugin extends Plugin {
     private final PurchasesUpdatedListener purchasesUpdatedListener = (billingResult, purchases) -> {
 
         JSObject response = new JSObject();
+        response.put("responseCode", billingResult.getResponseCode());
 
-        if(purchases != null) {
+        if(purchases != null && !purchases.isEmpty()) {
             for (int i = 0; i < purchases.size(); i++) {
 
                 Purchase currentPurchase = purchases.get(i);
@@ -127,6 +128,22 @@ public class SubscriptionsPlugin extends Plugin {
         }
 
         implementation.purchaseProduct(productIdentifier, call);
+
+    }
+
+    @PluginMethod
+    public void changeSubscription(PluginCall call) {
+
+        String productIdentifier = call.getString("productIdentifier");
+        String oldPurchaseToken = call.getString("oldPurchaseToken");
+        String replacementMode = call.getString("replacementMode");
+
+        if(productIdentifier == null || oldPurchaseToken == null || replacementMode == null) {
+            call.reject("Must provide productIdentifier, oldPurchaseToken and replacementMode");
+            return;
+        }
+
+        implementation.changeSubscription(productIdentifier, oldPurchaseToken, replacementMode, call);
 
     }
 
